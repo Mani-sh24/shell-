@@ -16,7 +16,8 @@ Currently, the shell supports the following functionalities:
   - `type [command]`: Identify whether a command is a shell builtin or an executable file, and display its location.
   - `pwd`: Print the current working directory.
   - `$PATH`: List all directories in the system's PATH.
-
+  - `history`: List all previous commands used.
+  - `cd`: changing and navigating directories.
 - **External Command Execution**:
   - Run any executable available in your system's PATH (e.g., `ls`, `cat`, `git`).
 
@@ -37,8 +38,6 @@ To build the project, ensure you have a C++ compiler (supporting C++17 or later)
 ## 📚 Learning Goals
 
 This project is a playground for:
-- String manipulation and tokenization in C++.
+- String manipulation and tokenization and parsing in C++.
 - Understanding process creation and execution.
-- Working with environment variables like `PATH`.
-- Managing standard input/output streams.
-
+- Learning about linux.

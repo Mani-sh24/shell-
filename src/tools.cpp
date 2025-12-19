@@ -37,7 +37,7 @@ void raise_command_error(string input)
 
 int type_checker(string input)
 {
-  vector<string> types = {"echo", "exit", "type" , "pwd"};
+  vector<string> types = {"echo", "exit", "type", "pwd" , "history"};
   for (string i : types)
   {
     if (input.compare(i) == 0)
@@ -144,11 +144,29 @@ int execute_command(vector<string> input)
     }
   }
   return 1; // command succeeded
-
 }
 
-string get_pwd(){
+string get_pwd()
+{
   fs::path current_dir = fs::current_path();
   string current_dir_str = current_dir.string();
   return current_dir_str;
+}
+
+int change_dir(string path)
+{
+  if (path.empty())
+  {
+    return 1; // No path given
+  }
+  if (path.compare("~") == 0)
+  {
+    path = getenv("HOME");
+  }
+  
+  if (chdir(path.c_str()) == -1)
+  {
+    return -1; // error no file found
+  }
+  return 0; // success
 }

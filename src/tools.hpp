@@ -14,3 +14,4 @@ string locater(const string &input);
 bool check_exec_exists(const fs::path &parent, const fs::path &child);
 int execute_command(vector<string> input);
 string get_pwd();
+int change_dir(string path);

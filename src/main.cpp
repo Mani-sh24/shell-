@@ -8,6 +8,7 @@ int main()
 
   std::string input;
   std::vector<std::string> input_tok;
+  vector<string> history_buffer;
 
   while (1)
   {
@@ -18,8 +19,13 @@ int main()
 
     if (input_tok.empty())
       continue;
-
-    if (input_tok[0].compare("exit") == 0) // Exit the shell 
+    string flattened_input_tok;
+    for (auto &i : input_tok)
+    {
+      flattened_input_tok += " " + i;
+    }
+    history_buffer.push_back(flattened_input_tok);
+    if (input_tok[0].compare("exit") == 0) // Exit the shell
     {
       return EXIT_SUCCESS;
     }
@@ -31,7 +37,7 @@ int main()
       }
       std::cout << std::endl;
     }
-    else if (input_tok[0].compare("type") == 0) // check type builtin or external 
+    else if (input_tok[0].compare("type") == 0) // check type builtin or external
     {
       if (input_tok.size() < 2)
       {
@@ -57,8 +63,39 @@ int main()
         }
       }
     }
+    else if (input_tok[0] == "history")
+    {
+      int idx = 1;
 
-    else if (input_tok[0].compare("$PATH") == 0) // Shows the path 
+      // Case 1: plain "history"
+      if (input_tok.size() == 1)
+      {
+        for (const string &h : history_buffer)
+        {
+          cout << idx++ << " " << h << endl;
+        }
+      }
+      // Case 2: "history N"
+      else
+      {
+        try
+        {
+          int n = std::stoi(input_tok[1]);
+
+          int start = std::max(0, (int)history_buffer.size() - n);
+
+          for (int i = start; i < history_buffer.size(); i++)
+          {
+            cout << (i + 1) << " " << history_buffer[i] << endl;
+          }
+        }
+        catch (const std::exception &e)
+        {
+          cerr << "history: invalid argument\n";
+        }
+      }
+    }
+    else if (input_tok[0].compare("$PATH") == 0) // Shows the path
     {
       std::vector<std::string> hello = split_path();
       for (auto &i : hello)
@@ -66,9 +103,22 @@ int main()
         std::cout << i << '\n';
       }
     }
-    else if(input_tok[0].compare("pwd") ==0 ){
+    else if (input_tok[0].compare("pwd") == 0)
+    {
       string res = get_pwd();
-      cout << res <<endl;
+      cout << res << endl;
+    }
+    else if (input_tok[0].compare("cd") == 0)
+    {
+      int res = change_dir(input_tok[1]);
+      if (res == 1)
+      {
+        cout << "No path given" << endl;
+      }
+      if (res == -1)
+      {
+        cout << input_tok[0] << ": " << input_tok[1] << ": No such file or directory" << endl;
+      }
     }
     else
     {
