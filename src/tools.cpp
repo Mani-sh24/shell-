@@ -3,6 +3,9 @@
 #include <unistd.h> // access()
 #include <cstdlib>  // getenv
 #include <vector>
+std::string input;
+std::vector<std::string> input_tok;
+vector<string> history_buffer;
 
 vector<string> split_path()
 {
@@ -37,7 +40,7 @@ void raise_command_error(string input)
 
 int type_checker(string input)
 {
-  vector<string> types = {"echo", "exit", "type", "pwd" , "history"};
+  vector<string> types = {"echo", "exit", "type", "pwd", "history"};
   for (string i : types)
   {
     if (input.compare(i) == 0)
@@ -163,10 +166,52 @@ int change_dir(string path)
   {
     path = getenv("HOME");
   }
-  
+
   if (chdir(path.c_str()) == -1)
   {
     return -1; // error no file found
   }
   return 0; // success
+}
+void push_history()
+{
+  string flattened_input_tok;
+  for (auto &i : input_tok)
+  {
+    flattened_input_tok += " " + i;
+  }
+  history_buffer.push_back(flattened_input_tok);
+}
+
+void list_history()
+{
+  int idx = 1;
+
+  // Case 1: plain "history"
+  if (input_tok.size() == 1)
+  {
+    for (const string &h : history_buffer)
+    {
+      cout << idx++ << " " << h << endl;
+    }
+  }
+  // Case 2: "history N"
+  else
+  {
+    try
+    {
+      int n = std::stoi(input_tok[1]);
+
+      int start = std::max(0, (int)history_buffer.size() - n);
+
+      for (int i = start; i < history_buffer.size(); i++)
+      {
+        cout << (i + 1) << " " << history_buffer[i] << endl;
+      }
+    }
+    catch (const std::exception &e)
+    {
+      cerr << "history: invalid argument\n";
+    }
+  }
 }

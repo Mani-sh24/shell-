@@ -3,28 +3,19 @@
 
 int main()
 {
-  std::cout << std::unitbuf;
-  std::cerr << std::unitbuf;
-
-  std::string input;
-  std::vector<std::string> input_tok;
-  vector<string> history_buffer;
+  cout << unitbuf;
+  cerr << unitbuf;
 
   while (1)
   {
-    std::cout << "$ ";
-    std::getline(std::cin, input);
+    cout << "$ ";
+    getline(cin, input);
 
     input_tok = tokenise_u(input);
 
     if (input_tok.empty())
       continue;
-    string flattened_input_tok;
-    for (auto &i : input_tok)
-    {
-      flattened_input_tok += " " + i;
-    }
-    history_buffer.push_back(flattened_input_tok);
+    push_history();
     if (input_tok[0].compare("exit") == 0) // Exit the shell
     {
       return EXIT_SUCCESS;
@@ -33,74 +24,46 @@ int main()
     {
       for (int i = 1; i < input_tok.size(); i++)
       {
-        std::cout << input_tok[i] << " ";
+        cout << input_tok[i] << " ";
       }
-      std::cout << std::endl;
+      cout << endl;
     }
     else if (input_tok[0].compare("type") == 0) // check type builtin or external
     {
       if (input_tok.size() < 2)
       {
-        std::cout << "type: missing operand\n";
+        cout << "type: missing operand\n";
         continue;
       }
 
       int _type = type_checker(input_tok[1]);
       if (_type == 1)
       {
-        std::cout << input_tok[1] << " is a shell builtin\n";
+        cout << input_tok[1] << " is a shell builtin\n";
       }
       else
       {
-        std::string res = locater(input_tok[1]);
+        string res = locater(input_tok[1]);
         if (!res.empty())
         {
-          std::cout << input_tok[1] << " is " << res << '\n';
+          cout << input_tok[1] << " is " << res << '\n';
         }
         else
         {
-          std::cout << input_tok[1] << ": not found\n";
+          cout << input_tok[1] << ": not found\n";
         }
       }
     }
     else if (input_tok[0] == "history")
     {
-      int idx = 1;
-
-      // Case 1: plain "history"
-      if (input_tok.size() == 1)
-      {
-        for (const string &h : history_buffer)
-        {
-          cout << idx++ << " " << h << endl;
-        }
-      }
-      // Case 2: "history N"
-      else
-      {
-        try
-        {
-          int n = std::stoi(input_tok[1]);
-
-          int start = std::max(0, (int)history_buffer.size() - n);
-
-          for (int i = start; i < history_buffer.size(); i++)
-          {
-            cout << (i + 1) << " " << history_buffer[i] << endl;
-          }
-        }
-        catch (const std::exception &e)
-        {
-          cerr << "history: invalid argument\n";
-        }
-      }
+      list_history();
     }
     else if (input_tok[0].compare("$PATH") == 0) // Shows the path
     {
-      std::vector<std::string> hello = split_path();
+      vector<string> hello = split_path();
       for (auto &i : hello)
       {
-        std::cout << i << '\n';
+        cout << i << '\n';
       }
     }
     else if (input_tok[0].compare("pwd") == 0)
