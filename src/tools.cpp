@@ -1,12 +1,12 @@
 #include "tools.hpp"
 #include <sys/wait.h>
-#include <unistd.h> // access()
-#include <cstdlib>  // getenv
-#include <vector>
+#include <cstdlib> // getenv
+#include <readline/readline.h>
+#include <readline/history.h>
+#include <fstream>
 std::string input;
 std::vector<std::string> input_tok;
 vector<string> history_buffer;
-
 vector<string> split_path()
 {
   vector<string> paths;
@@ -175,43 +175,151 @@ int change_dir(string path)
 }
 void push_history()
 {
-  string flattened_input_tok;
-  for (auto &i : input_tok)
-  {
-    flattened_input_tok += " " + i;
-  }
-  history_buffer.push_back(flattened_input_tok);
+  // string flattened_input_tok;
+  // for (auto &i : input_tok)
+  // {
+  //   flattened_input_tok += " " + i;
+  // }
+  // history_buffer.push_back(flattened_input_tok);
+  // add_history(flattened_input_tok.c_str());
+  if (input.empty())
+    return;
+
+  history_buffer.push_back(input);
+  add_history(input.c_str());
 }
 
-void list_history()
+size_t history_written = 0;
+void print_full_history()
 {
   int idx = 1;
+  for (const string &h : history_buffer)
+    cout << idx++ << " " << h << endl;
+}
+bool history_write(const string &path)
+{
+  ofstream file(path);
+  if (!file.is_open())
+    return false;
 
-  // Case 1: plain "history"
+  for (const string &h : history_buffer)
+    file << h << '\n';
+
+  history_written = history_buffer.size();
+  return true;
+}
+bool history_append(const string &path)
+{
+  ofstream file(path, ios::app);
+  if (!file.is_open())
+    return false;
+
+  for (size_t i = history_written; i < history_buffer.size(); i++)
+    file << history_buffer[i] << '\n';
+
+  history_written = history_buffer.size();
+  return true;
+}
+bool history_read(const string &path)
+{
+  ifstream file(path);
+  if (!file.is_open())
+    return false;
+
+  string line;
+  while (getline(file, line))
+  {
+    if (line.empty())
+      continue;
+
+    history_buffer.push_back(line);
+    add_history(line.c_str());
+  }
+
+  history_written = history_buffer.size();
+  return true;
+}
+bool print_last_n_history(const string &arg)
+{
+  try
+  {
+    int n = stoi(arg);
+    int start = max(0, (int)history_buffer.size() - n);
+
+    for (int i = start; i < history_buffer.size(); i++)
+      cout << (i + 1) << " " << history_buffer[i] << endl;
+
+    return true;
+  }
+  catch (...)
+  {
+    return false;
+  }
+}
+void list_history()
+{
+  if (input_tok.empty())
+    return;
+
+  // plain: history
   if (input_tok.size() == 1)
   {
-    for (const string &h : history_buffer)
-    {
-      cout << idx++ << " " << h << endl;
-    }
+    print_full_history();
   }
-  // Case 2: "history N"
+  // history -w FILE
+  else if (input_tok[1] == "-w")
+  {
+    if (input_tok.size() < 3 || !history_write(input_tok[2]))
+      cerr << "history: cannot write file\n";
+  }
+  // history -a FILE
+  else if (input_tok[1] == "-a")
+  {
+    if (input_tok.size() < 3 || !history_append(input_tok[2]))
+      cerr << "history: cannot append file\n";
+  }
+  // history -r FILE
+  else if (input_tok[1] == "-r")
+  {
+    if (input_tok.size() < 3 || !history_read(input_tok[2]))
+      cerr << "history: cannot read file\n";
+  }
+  // history N
   else
   {
-    try
-    {
-      int n = std::stoi(input_tok[1]);
-
-      int start = std::max(0, (int)history_buffer.size() - n);
-
-      for (int i = start; i < history_buffer.size(); i++)
-      {
-        cout << (i + 1) << " " << history_buffer[i] << endl;
-      }
-    }
-    catch (const std::exception &e)
-    {
+    if (!print_last_n_history(input_tok[1]))
       cerr << "history: invalid argument\n";
-    }
   }
+}
+const char *hist_env = getenv("HISTFILE");
+void load_history_from_env()
+{
+
+  if (!hist_env)
+    return;
+
+  ifstream file(hist_env);
+  if (!file.is_open())
+    return;
+
+  string line;
+  while (getline(file, line))
+  {
+    if (line.empty())
+      continue;
+
+    history_buffer.push_back(line);
+    add_history(line.c_str());
+  }
+
+  history_written = history_buffer.size();
+}
+
+void save_on_exit()
+{
+  const char *hist_env = getenv("HISTFILE");
+  if (!hist_env)
+    return;
+
+  history_append(hist_env);
 }

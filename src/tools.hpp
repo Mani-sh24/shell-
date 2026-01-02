@@ -23,3 +23,6 @@ string get_pwd();
 int change_dir(string path);
 void push_history();
 void list_history();
+void load_history_from_env();
+bool history_append(const string &path);
+void save_on_exit();
